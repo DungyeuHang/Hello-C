@@ -74,11 +74,11 @@ Console.WriteLine(" So du cua 2 so la: " + (st1 % st2)); */
 
 //Excercises 2
 
-Console.Write("Nhap so tuoi:");
+/* Console.Write("Nhap so tuoi:");
 string str_st = Console.ReadLine();
 int st = int.Parse(str_st);
 if (st < 18)
 { Console.WriteLine("Chua du tuoi truong thanh!"); }
 else if (18 <= st && st <=60)
 { Console.WriteLine("Thuoc tuoi truong thanh!"); }
-else { Console.WriteLine("Thuoc nguoi gia!"); }
+else { Console.WriteLine("Thuoc nguoi gia!"); } */
