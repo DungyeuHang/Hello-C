@@ -1,5 +1,8 @@
-﻿// Console.WriteLine("Xin chao the gioi, toi la DungX!");
+﻿//* Bai 1 ---------------------------- print Hello World! ---------------------------------
 
+// Console.WriteLine("Xin chao the gioi, toi la DungX!");
+
+//** --------------------------------------- Bai 2 Biến ------------------------------------
 /* int a = 5;
 int b = 10;
 double c = 5.5;
@@ -22,7 +25,9 @@ string Ten = "Dungx";
 int Tuoi = 26;
 Console.WriteLine("Toi ten la " + Ten  + "\nNam nay toi " +  Tuoi + " tuoi!"); */
 
-//Input
+
+
+//*** ------------------------------------------------Bài 3 input- nhập--------------------------
 /*
 Console.Write("Tên bạn là gì: ");
 string ten = Console.ReadLine();
@@ -57,7 +62,7 @@ int d = b--;
 
 Console.WriteLine((double)a/b); */
 
-//Excercises 1
+//**** ------------------------------------  Bài 4 + - * / %---------------------------------------------------
 
 /* Console.Write("Nhap so thu nhat: ");
 string s1 = Console.ReadLine();
@@ -72,7 +77,18 @@ Console.WriteLine(" Tich 2 so la: " + (st1 * st2));
 Console.WriteLine(" Thuong 2 so la: " + (st1 / st2));
 Console.WriteLine(" So du cua 2 so la: " + (st1 % st2)); */
 
-//Excercises 2
+//***** ----------------------------------------  Bài 5 if else if else - while - for -------------------------------
+
+
+// if
+/* 
+
+if (điều_kiện)
+{ // nếu điều kiện đúng}
+else
+{ // nếu điều kiện sai }
+
+*/
 
 /* Console.Write("Nhap so tuoi:");
 string str_st = Console.ReadLine();
@@ -83,3 +99,144 @@ else if (18 <= st && st <=60)
 { Console.WriteLine("Thuoc tuoi truong thanh!"); }
 else { Console.WriteLine("Thuoc nguoi gia!"); } */
 //Test change github
+
+/*
+int i = 5+2;
+if (i < 5)
+{ Console.WriteLine("nho hon 5"); }
+else if (i == 5)
+{ Console.WriteLine(" bang 5"); }
+else
+{ Console.WriteLine(" lon hon 5"); } 
+*/
+
+/* while (điều_kiện)
+{
+    // lặp lại mã khi điều kiện còn đúng
+}
+*/
+
+/*
+int i = 1;
+while (i <= 5)
+{ Console.WriteLine("Lan thu: " + i);
+    i++;
+}
+*/
+
+/* for (int i = 0; i < số_lần; i++)
+{
+    // phần thân lặp
+}
+*/
+
+/*
+int i = 0;
+for (; i <= 5; i++)
+{ Console.WriteLine(i); }
+*/
+
+
+
+//-------------------------------------****** Bài 6  Hàm (Method) *****---------------------
+/* <kiểu_trả_về> <tên_hàm>(<tham_số>)
+{
+    // phần thân hàm
+    return <giá_trị>; // nếu có
+}
+*/
+
+/* int Cong2so( int a , int b)
+    { return a + b; }
+
+int Tong = Cong2so(5, 2);
+Console.WriteLine(Tong); */
+
+/*
+class TinhToan
+{
+    public static int Cong(int a, int b)
+    {
+        return a + b;
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        int i = TinhToan.Cong(6, 5);
+        Console.WriteLine(i);
+    }
+}
+*/
+
+/*
+class MayTinh
+{
+    private int BiMat = 123;
+
+    public void HienThiBiMat()
+    {
+        Console.WriteLine(BiMat); // ✅ OK vì gọi bên trong class
+    }
+}
+*/
+
+/*
+void Chao(string ten)
+{
+    Console.WriteLine("Xin chào " + ten);
+}
+
+Chao("Dung");
+*/
+
+int[] so = new int[3];     // mảng 3 phần tử rỗng
+int[] diem = { 7, 8, 9, 15 };  // mảng khởi tạo sẵn
+
+Console.WriteLine(diem[0]); // 👉 in ra 7
+diem[1] = 10;               // 👉 sửa phần tử thứ 2
+
+Console.WriteLine(diem[3]);
+
+Console.WriteLine(so);
+
+
+
+
+foreach (int d in diem)
+{
+    Console.WriteLine("Điểm: " + d);
+}
+
+List<string> ten = new List<string>();
+ten.Add("Dũng");
+ten.Add("Hằng");
+
+foreach (string t in ten)
+{
+    Console.WriteLine("Tên: " + t);
+}
+
+int ngay = 3;
+
+switch (ngay)
+{
+    case 1:
+        Console.WriteLine("Thứ Hai");
+        break;
+    case 2:
+        Console.WriteLine("Thứ Ba");
+        break;
+    case 3:
+        Console.WriteLine("Thứ Tư");
+        break;
+    default:
+        Console.WriteLine("Không biết ngày");
+        break;
+}
+
+
+
+
