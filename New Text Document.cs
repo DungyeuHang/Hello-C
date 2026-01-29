@@ -1,102 +1,98 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
+﻿using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.EditorInput;
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace MyAutoCADPlugin
+public class ChiaDimCommands
 {
-    public class MyCommands
+    [CommandMethod("CDD_CHIADIM")]
+    public void ChiaDim()
     {
-        // 🟢 Lệnh vẽ Line giữa 2 điểm
-        [CommandMethod("VE_LINE")]
-        public void VeLine()
+        Document doc = Application.DocumentManager.MdiActiveDocument;
+        Editor ed = doc.Editor;
+        Database db = doc.Database;
+
+        // ================= SELECT DIM =================
+        PromptEntityOptions peo = new PromptEntityOptions("\nChọn DIM cần chia: ");
+        peo.SetRejectMessage("\nKhông phải DIM.");
+        peo.AddAllowedClass(typeof(Dimension), true);
+
+        PromptEntityResult per = ed.GetEntity(peo);
+        if (per.Status != PromptStatus.OK) return;
+
+        using (Transaction tr = db.TransactionManager.StartTransaction())
         {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Editor ed = doc.Editor;
+            Dimension dim = tr.GetObject(per.ObjectId, OpenMode.ForWrite) as Dimension;
+            if (dim == null) return;
 
-            PromptPointResult p1 = ed.GetPoint("\nChọn điểm đầu: ");
-            if (p1.Status != PromptStatus.OK) return;
+            // ================= GET DIM POINTS =================
+            Point3d pt1 = dim.XLine1Point;
+            Point3d pt2 = dim.XLine2Point;
+            Point3d ptDim = dim.DimLinePoint;
 
-            PromptPointOptions ppo = new PromptPointOptions("\nChọn điểm cuối: ");
-            ppo.BasePoint = p1.Value;
-            ppo.UseBasePoint = true;
-            PromptPointResult p2 = ed.GetPoint(ppo);
-            if (p2.Status != PromptStatus.OK) return;
-
-            Database db = doc.Database;
-            using (Transaction trans = db.TransactionManager.StartTransaction())
-            {
-                BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                BlockTableRecord btr = trans.GetObject(db.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-
-                Line line = new Line(p1.Value, p2.Value);
-                btr.AppendEntity(line);
-                trans.AddNewlyCreatedDBObject(line, true);
-                trans.Commit();
-            }
-
-            ed.WriteMessage("\n✅ Đã vẽ xong Line!");
-        }
-
-        // 🔵 Lệnh vẽ Polyline nhiều điểm
-        [CommandMethod("VE_PLINE")]
-        public void VePolyline()
-        {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Editor ed = doc.Editor;
-
-            Database db = doc.Database;
-            Point3dCollection diemList = new Point3dCollection();
-
-            // Nhập điểm đầu tiên
-            PromptPointResult pRes = ed.GetPoint("\nChọn điểm đầu tiên: ");
-            if (pRes.Status != PromptStatus.OK) return;
-
-            diemList.Add(pRes.Value);
+            // ================= PICK DIVISION POINTS =================
+            List<Point3d> points = new List<Point3d> { pt1 };
 
             while (true)
             {
-                PromptPointOptions ppo = new PromptPointOptions("\nChọn điểm tiếp theo hoặc ENTER để kết thúc: ");
-                ppo.BasePoint = diemList[diemList.Count - 1];
-                ppo.UseBasePoint = true;
+                PromptPointOptions ppo = new PromptPointOptions("\nChọn điểm chia (Enter để kết thúc): ");
+                PromptPointResult ppr = ed.GetPoint(ppo);
 
-                PromptPointResult pNext = ed.GetPoint(ppo);
-
-                if (pNext.Status == PromptStatus.OK)
-                {
-                    diemList.Add(pNext.Value);
-                }
-                else
-                {
+                if (ppr.Status != PromptStatus.OK)
                     break;
-                }
+
+                points.Add(new Point3d(ppr.Value.X, ppr.Value.Y, 0));
             }
 
-            if (diemList.Count < 2)
+            points.Add(pt2);
+
+            if (points.Count < 3)
             {
-                ed.WriteMessage("\n⚠ Cần ít nhất 2 điểm để tạo polyline.");
+                ed.WriteMessage("\nKhông đủ điểm chia.");
                 return;
             }
 
-            using (Transaction trans = db.TransactionManager.StartTransaction())
+            // ================= SORT POINTS =================
+            points = points
+                .OrderBy(p => p.DistanceTo(pt1))
+                .ToList();
+
+            // ================= DELETE OLD DIM =================
+            dim.Erase();
+
+            BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+            BlockTableRecord btr =
+                tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite)
+                as BlockTableRecord;
+
+            // ================= CREATE NEW DIMS =================
+            for (int index = 0; index < points.Count - 1; index++)
             {
-                BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                BlockTableRecord btr = trans.GetObject(db.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                Point3d pA = points[index];
+                Point3d pB = points[index + 1];
 
-                Polyline pl = new Polyline();
-                for (int i = 0; i < diemList.Count; i++)
+                bool isHorizontal =
+                    System.Math.Abs(pA.X - pB.X) > System.Math.Abs(pA.Y - pB.Y);
+
+                RotatedDimension newDim = new RotatedDimension
                 {
-                    Point2d pt2d = new Point2d(diemList[i].X, diemList[i].Y);
-                    pl.AddVertexAt(i, pt2d, 0, 0, 0);
-                }
+                    XLine1Point = pA,
+                    XLine2Point = pB,
+                    DimLinePoint = ptDim,
+                    Rotation = isHorizontal ? 0 : System.Math.PI / 2,
+                    DimensionStyle = db.Dimstyle
+                };
 
-                btr.AppendEntity(pl);
-                trans.AddNewlyCreatedDBObject(pl, true);
-                trans.Commit();
+                btr.AppendEntity(newDim);
+                tr.AddNewlyCreatedDBObject(newDim, true);
             }
 
-            ed.WriteMessage($"\n✅ Đã vẽ polyline với {diemList.Count} điểm!");
+            tr.Commit();
         }
+
+        ed.WriteMessage("\nChia DIM xong – C# version chạy bền như trâu 🐂");
     }
 }

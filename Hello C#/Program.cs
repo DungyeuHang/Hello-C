@@ -3,41 +3,100 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
+using Microsoft.VisualBasic;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Metadata;
+using System.Transactions;
+using static System.Net.Mime.MediaTypeNames;
 
-namespace MyAutoCADPlugin
+public class ChiaDimCommands
 {
-    public class DrawLineCommand
+    [CommandMethod("CDD_CHIADIM")]
+    public void ChiaDim()
     {
-        [CommandMethod("VeLine")]
-        public void VeLine()
+        Document doc = Application.DocumentManager.MdiActiveDocument;
+        Editor ed = doc.Editor;
+        Database db = doc.Database;
+
+        // ================= SELECT DIM =================
+        PromptEntityOptions peo = new PromptEntityOptions("\nChọn DIM cần chia: ");
+        peo.SetRejectMessage("\nKhông phải DIM.");
+        peo.AddAllowedClass(typeof(Dimension), true);
+
+        PromptEntityResult per = ed.GetEntity(peo);
+        if (per.Status != PromptStatus.OK) return;
+
+        using (Transaction tr = db.TransactionManager.StartTransaction())
         {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Database db = doc.Database;
-            Editor ed = doc.Editor;
+            Dimension dim = tr.GetObject(per.ObjectId, OpenMode.ForWrite) as Dimension;
+            if (dim == null) return;
 
-            // Chọn 2 điểm
-            PromptPointResult p1 = ed.GetPoint("\nChọn điểm đầu: ");
-            if (p1.Status != PromptStatus.OK) return;
+            // ================= GET DIM POINTS =================
+            Point3d pt1 = dim.XLine1Point;
+            Point3d pt2 = dim.XLine2Point;
+            Point3d ptDim = dim.DimLinePoint;
 
-            PromptPointOptions ppo = new PromptPointOptions("\nChọn điểm kết thúc: ");
-            ppo.BasePoint = p1.Value;
-            ppo.UseBasePoint = true;
-            PromptPointResult p2 = ed.GetPoint(ppo);
-            if (p2.Status != PromptStatus.OK) return;
+            // ================= PICK DIVISION POINTS =================
+            List<Point3d> points = new List<Point3d> { pt1 };
 
-            using (Transaction tr = db.TransactionManager.StartTransaction())
+            while (true)
             {
-                BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
-                BlockTableRecord btr = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
+                PromptPointOptions ppo = new PromptPointOptions("\nChọn điểm chia (Enter để kết thúc): ");
+                PromptPointResult ppr = ed.GetPoint(ppo);
 
-                Line line = new Line(p1.Value, p2.Value);
-                btr.AppendEntity(line);
-                tr.AddNewlyCreatedDBObject(line, true);
+                if (ppr.Status != PromptStatus.OK)
+                    break;
 
-                tr.Commit();
+                points.Add(new Point3d(ppr.Value.X, ppr.Value.Y, 0));
             }
 
-            ed.WriteMessage("\nĐã vẽ đoạn thẳng từ {0} đến {1}", p1.Value, p2.Value);
+            points.Add(pt2);
+
+            if (points.Count < 3)
+            {
+                ed.WriteMessage("\nKhông đủ điểm chia.");
+                return;
+            }
+
+            // ================= SORT POINTS =================
+            points = points
+                .OrderBy(p => p.DistanceTo(pt1))
+                .ToList();
+
+            // ================= DELETE OLD DIM =================
+            dim.Erase();
+
+            BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+            BlockTableRecord btr =
+                tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite)
+                as BlockTableRecord;
+
+            // ================= CREATE NEW DIMS =================
+            for (int index = 0; index < points.Count - 1; index++)
+            {
+                Point3d pA = points[index];
+                Point3d pB = points[index + 1];
+
+                bool isHorizontal =
+                    System.Math.Abs(pA.X - pB.X) > System.Math.Abs(pA.Y - pB.Y);
+
+                RotatedDimension newDim = new RotatedDimension
+                {
+                    XLine1Point = pA,
+                    XLine2Point = pB,
+                    DimLinePoint = ptDim,
+                    Rotation = isHorizontal ? 0 : System.Math.PI / 2,
+                    DimensionStyle = db.Dimstyle
+                };
+
+                btr.AppendEntity(newDim);
+                tr.AddNewlyCreatedDBObject(newDim, true);
+            }
+
+            tr.Commit();
         }
+
+        ed.WriteMessage("\nChia DIM xong – C# version chạy bền như trâu 🐂");
     }
 }
