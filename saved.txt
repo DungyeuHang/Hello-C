@@ -1,0 +1,73 @@
+//Code C# đã làm :
+//             1)      //
+using System;
+class MyHouse
+{ static void Main()
+    { string nguoi = "dungx";
+      int tuoi = 27;
+        double diem = 8.8;
+        bool dihoc = false;
+      Console.WriteLine("hoc sinh: " + nguoi + " " + tuoi + " tuoi" );
+        if ( dihoc == true)
+        { Console.WriteLine("co di hoc!"); }
+        else
+        { Console.WriteLine("khong di hoc!"); }
+        if (diem >= 8)
+        { Console.WriteLine("Hoc sinh gioi!"); }
+        else { Console.WriteLine("Khong duoc hoc sinh gioi!"); }
+    }
+}
+
+//                2)     //
+using System;
+class Nhapthongtin
+{ static void Main()
+    { Console.WriteLine("Ten ban la gi?");
+        string ten = Console.ReadLine();
+
+        Console.WriteLine("Ban bao nhieu tuoi:?");
+        int tuoi = int.Parse(Console.ReadLine());
+
+        Console.WriteLine("Hello " + ten);
+        Console.WriteLine($"Ban {tuoi} tuoi!");
+    }
+
+}
+
+
+//                3)     //
+using System;
+class test
+{ static void Main()
+    {
+        Console.WriteLine("Nhap so diem");
+        double diem = double.Parse(Console.ReadLine()); 
+        if (diem <= 5)
+        { Console.WriteLine("Hoc sinh kem!"); }
+        else if (5< diem && diem <= 8)
+        { Console.WriteLine("Hoc sinh kha!"); }
+        else
+        { Console.WriteLine("Hoc sinh gioi!"); }
+
+    }
+}
+//dieu kien if ((tuoi >= 18 && coCCCD) || coNguoiBaoLanh) "&&-và" "|| hoặc" "!-khác"
+
+//                4)     //
+using System;
+class test
+{ static void Main()
+    {
+        Console.WriteLine("Nhap so diem");
+        double diem = double.Parse(Console.ReadLine()); 
+        if (diem <= 5)
+        { Console.WriteLine("Hoc sinh kem!"); }
+        else if (5< diem && diem <= 8)
+        { Console.WriteLine("Hoc sinh kha!"); }
+        else
+        { Console.WriteLine("Hoc sinh gioi!"); }
+
+    }
+}
+
+
